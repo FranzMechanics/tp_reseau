@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/time.h>
+
 #define MAXLEN 100
 
 void initMyAlgo();
@@ -75,16 +77,41 @@ int main (int argc,char *argv[])
  	struct in_addr a;
 
 	initMyAlgo();
+
+	int count, count_ok;
+	count_ok = count = 0;
+
+	struct timeval tval_before, tval_after, tval_result;
+	gettimeofday(&tval_before, NULL);
+
 	if ((argc > 1 ) && (loadFile(argv[1]))) {
 		printf("IP lookup algo\n");
-		while (1) {
-			fgets(s,MAXLEN,stdin);
+
+		FILE* f = fopen("TP1_resultats.", "r");
+		while (fgets(s,MAXLEN,f) != NULL) {
+
+			char* ip = strtok(s, " ");
+			char* result = strtok(NULL, " ");
+
 			s[MAXLEN]=0;
-			if (inet_aton(s,&a) == 0 ) continue;
+			if (inet_aton(ip,&a) == 0 ) continue;
 			addr=htonl(a.s_addr);
+
 			a.s_addr=htonl(lookupMyAlgo(addr));
+
 			printf("GW found = %s\n",inet_ntoa(a));
+
+			if(strcmp(inet_ntoa(a), result) != 0){
+				count_ok++;
+			} count++;
 		}
+		fclose(f);
 	}
+
+	gettimeofday(&tval_after, NULL);
+	timersub(&tval_after, &tval_before, &tval_result);
+	printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+
+	printf("Resultat = %d/%d, %d%%\n", count_ok, count, count_ok*100/count);
 	return 0;
 }
