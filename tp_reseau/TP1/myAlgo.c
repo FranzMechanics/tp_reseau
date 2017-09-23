@@ -13,6 +13,18 @@ typedef struct Noeud{
 
 Noeud* racine;
 
+/*Fonction qui convertit addr en un tableau de char representant les bits, ne pas oublier de free */
+char * IPtoTabChar(unsigned int addr){
+    char * addr_bin = (char *) malloc(sizeof(char)*33);
+    int i;
+    for(i=0;i<32;i++){
+        addr_bin[i] = ( (addr << i) & (1 <<31)) ? '1' : '0' ;
+    }
+    addr_bin[32]='\0';
+    return addr_bin;
+}
+
+/*Fonction qui calcule le CIDR*/
 int hamming(char* netmask_bin){
     int count = 0;
     for(int i=0; i<32; i++){
@@ -40,26 +52,11 @@ void insertMyAlgo(unsigned int addr,unsigned int netmask,unsigned int gw){
     // On recupere la racine de l'arbre
     Noeud *curr = racine;
 
-    char addr_bin[8*sizeof(unsigned int) + 1] = {0};
-    for (int j = 0; j < (8*sizeof(unsigned int) + 1); j++) {
-        addr_bin[j] = (addr << j) & (1 << (8*sizeof(unsigned int)-1)) ? '1' : '0';
-    }
-    addr_bin[32] = '\0';
-    //printf("addr is b%s\n", addr_bin);
-
-    char netmask_bin[8*sizeof(unsigned int) + 1] = {0};
-    for (int j = 0; j < (8*sizeof(unsigned int) + 1); j++) {
-        netmask_bin[j] = (netmask << j) & (1 << (8*sizeof(unsigned int)-1)) ? '1' : '0';
-    }
-    netmask_bin[32] = '\0';
-    //printf("netmask is b%s\n", netmask_bin);
-
-    //printf("%s %s\n", addr_bin, netmask_bin);
+    char *addr_bin = (char *) IPtoTabChar(addr);
+    char *netmask_bin = (char *) IPtoTabChar(netmask);
 
     // On calcule le poids du netmask binaire pour obtenir le CIDR
     netmask_dec = hamming(netmask_bin);
-
-    //printf("Netmask : /%d\n", netmask_dec);
 
     /* On regarde les (---.---.---.---/n) n premiers caracteres de l'adresse IP
     Chaque bit represente un noeud. Si le prochain bit de la chaine est un 0,
@@ -67,7 +64,6 @@ void insertMyAlgo(unsigned int addr,unsigned int netmask,unsigned int gw){
     droite. Enfin quand on finit le parcours on ajoute la gateway correspondant
     a ce routage au noeud sur lequel on se trouve */
     for(int i=0; i<netmask_dec; i++){
-        //printf("%c", addr_bin[i]);
         if(addr_bin[i] == '1'){
             if(curr->fd == NULL){
                 curr->fd = malloc(sizeof(Noeud));
@@ -84,42 +80,32 @@ void insertMyAlgo(unsigned int addr,unsigned int netmask,unsigned int gw){
         }
     }
     curr->nextHop = gw;
-    //printf("\n%x\n", curr->nextHop);
+    free(addr_bin);
+    free(netmask_bin);
 }
 
 unsigned int lookupMyAlgo(unsigned int addr){
     unsigned int nextHop = 0;
 
-    char addr_bin[8*sizeof(unsigned int) + 1] = {0};
-    for (int j = 0; j < (8*sizeof(unsigned int) + 1); j++) {
-        addr_bin[j] = (addr << j) & (1 << (8*sizeof(unsigned int)-1)) ? '1' : '0';
-    }
-    addr_bin[32] = '\0';
-    //printf("addr is b%s\n", addr_bin);
+    char *addr_bin = (char *) IPtoTabChar(addr);
 
-    //printf("%s\n", addr_bin);
     // On recupere la racine de l'arbre
     Noeud *curr = racine;
     for(int i=0; i<32; i++){
-        //printf("%u\n", curr->nextHop);
         if(addr_bin[i] == '1'){
             if(curr->fd == NULL){
-                //printf("w");
                 break;
             }
             if(curr->nextHop != 0){
-                //printf("Found\n");
                 nextHop = curr->nextHop;
             }
             curr = curr->fd;
         }
         else if (addr_bin[i] == '0'){
             if(curr->fg == NULL){
-                //printf("w");
                 break;
             }
             if(curr->nextHop != 0){
-                //printf("Found\n");
                 nextHop = curr->nextHop;
             }
             curr = curr->fg;
@@ -128,6 +114,6 @@ unsigned int lookupMyAlgo(unsigned int addr){
             printf("%c : Erreur caractere invalide\n", addr_bin[i]);
         }
     }
-
+    free(addr_bin);
     return nextHop;
 }
