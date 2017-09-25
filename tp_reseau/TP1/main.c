@@ -96,7 +96,7 @@ int main (int argc,char *argv[])
 			s[MAXLEN]=0;
 			if (inet_aton(ip,&a) == 0 ) continue;
 			addr=htonl(a.s_addr);
-
+            printf("Adresse a chercher : %s  ",inet_ntoa(a));
 			a.s_addr=htonl(lookupMyAlgo(addr));
 
 			printf("GW found = %s\n",inet_ntoa(a));
@@ -107,7 +107,10 @@ int main (int argc,char *argv[])
 		}
 		fclose(f);
 	}
-
+    if(count==0){
+        printf("Aucun fichier lu\n");
+        return 0;
+    }
 	gettimeofday(&tval_after, NULL);
 	timersub(&tval_after, &tval_before, &tval_result);
 	printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
