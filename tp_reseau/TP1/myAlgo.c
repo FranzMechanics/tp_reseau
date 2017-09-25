@@ -73,7 +73,7 @@ void insertMyAlgo(unsigned int addr,unsigned int netmask,unsigned int gw){
     // On calcule le poids du netmask binaire pour obtenir le CIDR
     netmask_dec = hamming(netmask_bin);
     step_to_descent = netmask_dec / 2;
-
+    if (netmask_dec%2 == 1)step_to_descent++;
     /* On regarde les (---.---.---.---/n) n premiers caracteres de l'adresse IP
     Chaque bit represente un noeud. Si le prochain bit de la chaine est un 0,
     on partira sur la branche gauche du noeud, et si c'est un 1 on part sur la branche
@@ -97,18 +97,18 @@ void insertMyAlgo(unsigned int addr,unsigned int netmask,unsigned int gw){
                 curr = curr->f1;
                 break;
             case 2:
-            if(curr->f2 == NULL){
-                curr->f2 = malloc(sizeof(Noeud));
-                curr->f2->nextHop = 0;
-            }
-            curr = curr->f2;
+                if(curr->f2 == NULL){
+                    curr->f2 = malloc(sizeof(Noeud));
+                    curr->f2->nextHop = 0;
+                }
+                curr = curr->f2;
                 break;
             case 3:
-            if(curr->f3 == NULL){
-                curr->f3 = malloc(sizeof(Noeud));
-                curr->f3->nextHop = 0;
-            }
-            curr = curr->f3;
+                if(curr->f3 == NULL){
+                    curr->f3 = malloc(sizeof(Noeud));
+                    curr->f3->nextHop = 0;
+                }
+                curr = curr->f3;
                 break;
         }
     }
@@ -143,52 +143,38 @@ unsigned int lookupMyAlgo(unsigned int addr){
     Noeud *curr = racine;
     int choix_fils;
     int i =0;
-    while( curr != NULL){
+    int fin=1;
+    while(i<32 && fin){
         choix_fils= fct_choix_fils(addr_bin,i);
+        if(curr != NULL){
+            if(curr->nextHop != 0){
+                nextHop = curr->nextHop;
+            }
+        }
         switch (choix_fils) {
             case 0:
-                if(curr->nextHop != 0){
-                    nextHop = curr->nextHop;
-                }
                 if(curr->f0 == NULL){
-                    curr=NULL;
-                    break;
+                    fin = 0;
                 }
-
-                curr = curr->f0;
+                else curr = curr->f0;
                 break;
             case 1:
-                if(curr->nextHop != 0){
-                    nextHop = curr->nextHop;
-                }
                 if(curr->f1 == NULL){
-                    curr=NULL;
-                    break;
+                    fin =0;
                 }
-
-                curr = curr->f1;
+                else curr = curr->f1;
                 break;
             case 2:
-            if(curr->nextHop != 0){
-                nextHop = curr->nextHop;
-            }
                 if(curr->f2 == NULL){
-                    curr=NULL;
-                    break;
+                    fin =0;
                 }
-
-                curr = curr->f2;
+                else curr = curr->f2;
                 break;
             case 3:
-            if(curr->nextHop != 0){
-                nextHop = curr->nextHop;
-            }
                 if(curr->f3 == NULL){
-                    curr=NULL;
-                    break;
+                    fin = 0;
                 }
-
-                curr = curr->f3;
+                else curr = curr->f3;
                 break;
             default:
                 printf("%c : Erreur caractere invalide\n", addr_bin[i]);
