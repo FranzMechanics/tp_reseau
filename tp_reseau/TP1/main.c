@@ -91,7 +91,7 @@ int main (int argc,char *argv[])
 		while (fgets(s,MAXLEN,f) != NULL) {
 
 			char* ip = strtok(s, " ");
-			char* result = strtok(NULL, " ");
+			char* result = strtok(NULL, "\n");
 
 			s[MAXLEN]=0;
 			if (inet_aton(ip,&a) == 0 ) continue;
@@ -101,7 +101,7 @@ int main (int argc,char *argv[])
 
 			printf("GW found = %s\n",inet_ntoa(a));
 
-			if(strcmp(inet_ntoa(a), result) != 0){
+			if(strcmp(inet_ntoa(a), result) == 0){
 				count_ok++;
 			} count++;
 		}

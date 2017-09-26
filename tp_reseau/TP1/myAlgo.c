@@ -6,35 +6,28 @@
 #include <string.h>
 
 typedef struct Noeud{
-    struct Noeud* fg;  //Branche 0
-    struct Noeud* fd;  //Branche 1
+    struct Noeud* f0;  //Branche 0
+    struct Noeud* f1;  //Branche 1
     unsigned int nextHop;
 }Noeud;
 
 Noeud* racine;
 
-/*Fonction qui convertit addr en un tableau de char representant les bits, ne pas oublier de free */
-char * IPtoTabChar(unsigned int addr){
-    char * addr_bin = (char *) malloc(sizeof(char)*33);
-    int i;
-    for(i=0;i<32;i++){
-        addr_bin[i] = ( (addr << i) & (1 <<31)) ? '1' : '0' ;
-    }
-    addr_bin[32]='\0';
-    return addr_bin;
-}
+// Representation d une adresse 128.0.0.2 -> 10000000.00000000.00000000.00000010 indice de 0->31 de gauche a droite
 
 /*Fonction qui calcule le CIDR*/
-int hamming(char* netmask_bin){
-    int count = 0;
-    for(int i=0; i<32; i++){
-        if(netmask_bin[i] == '1'){
-            count++;
-        }
+int calcul_cidr(unsigned int netmask){
+    int cidr=0;
+    for(int i=0;i<32;i++){
+        if ((netmask >> i) & 1) cidr++;
     }
-    return count;
+    return cidr;
 }
 
+/*i = indice du tableu binaire virtuel*/
+int take_bit(unsigned addr,int i){
+    return (addr>>(31-i))&1;
+}
 /*
 Declaration de l'arbre en global
 Pour ajouter un noeud --> on part de la racine et on reparcourt tout l'arbre en insérant le next hop au bon endroit
@@ -42,78 +35,51 @@ Pour ajouter un noeud --> on part de la racine et on reparcourt tout l'arbre en 
 
 void initMyAlgo(){
     racine = malloc(sizeof(Noeud));
-    racine->fg = NULL;
-    racine->fd = NULL;
+    racine->nextHop = 0;
 }
 
+/*Calcul la valeur en decimal des 3 prochain bit a partir de i inclus*/
+
 void insertMyAlgo(unsigned int addr,unsigned int netmask,unsigned int gw){
-    int netmask_dec;
-
-    // On recupere la racine de l'arbre
-    Noeud *curr = racine;
-
-    char *addr_bin = (char *) IPtoTabChar(addr);
-    char *netmask_bin = (char *) IPtoTabChar(netmask);
-
-    // On calcule le poids du netmask binaire pour obtenir le CIDR
-    netmask_dec = hamming(netmask_bin);
-
-    /* On regarde les (---.---.---.---/n) n premiers caracteres de l'adresse IP
-    Chaque bit represente un noeud. Si le prochain bit de la chaine est un 0,
-    on partira sur la branche gauche du noeud, et si c'est un 1 on part sur la branche
-    droite. Enfin quand on finit le parcours on ajoute la gateway correspondant
-    a ce routage au noeud sur lequel on se trouve */
-    for(int i=0; i<netmask_dec; i++){
-        if(addr_bin[i] == '1'){
-            if(curr->fd == NULL){
-                curr->fd = malloc(sizeof(Noeud));
-                curr->fd->nextHop = 0;
+    int cidr,i;
+    unsigned int addr_net;
+    Noeud * current;
+    cidr = calcul_cidr(netmask);
+    addr_net = addr & netmask;
+    current = racine;
+    for(i=0;i<cidr;i++){
+        if (!(take_bit(addr_net,i))){ //Cas 0
+            if(current->f0 == NULL){
+                current->f0 = malloc(sizeof(Noeud));
+                current->f0->nextHop=0;
             }
-            curr = curr->fd;
+            current= current->f0;
         }
-        else{
-            if(curr->fg == NULL){
-                curr->fg = malloc(sizeof(Noeud));
-                curr->fg->nextHop = 0;
+        else{ //Caqs 1
+            if(current->f1 == NULL){
+                current->f1 = malloc(sizeof(Noeud));
+                current->f1->nextHop=0;
             }
-            curr = curr->fg;
+            current= current->f1;
         }
     }
-    curr->nextHop = gw;
-    free(addr_bin);
-    free(netmask_bin);
+    current->nextHop = gw;
 }
 
 unsigned int lookupMyAlgo(unsigned int addr){
-    unsigned int nextHop = 0;
-
-    char *addr_bin = (char *) IPtoTabChar(addr);
-
-    // On recupere la racine de l'arbre
-    Noeud *curr = racine;
-    for(int i=0; i<32; i++){
-        if(addr_bin[i] == '1'){
-            if(curr->fd == NULL){
-                break;
-            }
-            if(curr->nextHop != 0){
-                nextHop = curr->nextHop;
-            }
-            curr = curr->fd;
+    unsigned int nextHop=0;
+    int i=0;
+    Noeud * current;
+    current = racine;
+    while(current != NULL){
+        if(current->nextHop != 0 ) nextHop = current->nextHop;
+        if (take_bit(addr,i)==0 ){ //Cas 0
+            current= current->f0;
         }
-        else if (addr_bin[i] == '0'){
-            if(curr->fg == NULL){
-                break;
-            }
-            if(curr->nextHop != 0){
-                nextHop = curr->nextHop;
-            }
-            curr = curr->fg;
+        else{ //Caqs 1
+            current= current->f1;
         }
-        else {
-            printf("%c : Erreur caractere invalide\n", addr_bin[i]);
-        }
+        i++;
     }
-    free(addr_bin);
     return nextHop;
 }
