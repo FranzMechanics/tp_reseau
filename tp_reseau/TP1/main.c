@@ -39,6 +39,12 @@ int loadFile(char *path)
 			if (inet_aton(start,&c) == 0 ) continue;
 			addr=htonl(c.s_addr);
 		}
+	//	printf("Addresse : %s\n",inet_ntoa(c));
+		/*for(int i=0;i<32;i++){
+		printf("Bit indice %d = %d\n",i,take_bit(addr,i));
+	}*/
+
+
 		// skip remaining blank char
 		while (*p && (*p == ' ')) p++;
 
@@ -50,6 +56,8 @@ int loadFile(char *path)
 			if (inet_aton(start,&c) == 0 ) continue;
 			netmask=htonl(c.s_addr);
 		}
+	//	printf("Netmask : %s\n",inet_ntoa(c));
+	//	printf("CIDR = %d\n",calcul_cidr(netmask));
 		// skip remaining blank char
 		while (*p && (*p == ' ')) p++;
 
@@ -74,7 +82,7 @@ int main (int argc,char *argv[])
 {
 	char s[MAXLEN];
 	int addr;
- 	struct in_addr a,b;
+ 	struct in_addr a;
 
 	initMyAlgo();
 
@@ -96,7 +104,7 @@ int main (int argc,char *argv[])
 			s[MAXLEN]=0;
 			if (inet_aton(ip,&a) == 0 ) continue;
 			addr=htonl(a.s_addr);
-            printf("Adresse a chercher : %s  ",inet_ntoa(a));
+        //    printf("Adresse a chercher : %s  ",inet_ntoa(a));
 			a.s_addr=htonl(lookupMyAlgo(addr));
 
 			printf("GW found = %s\n",inet_ntoa(a));
