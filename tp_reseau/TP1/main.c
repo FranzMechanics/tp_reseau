@@ -24,6 +24,7 @@ int loadFile(char *path)
  	struct in_addr c;
 	unsigned int addr,netmask,gw;
 
+	printf("\n");
 	// first sanity check
 	if (!path) return 0;
 	if ((fi=fopen(path,"r")) == NULL ) return 0;
@@ -95,6 +96,7 @@ int main (int argc,char *argv[])
 	if ((argc > 1 ) && (loadFile(argv[1]))) {
 		printf("IP lookup algo\n");
 
+		//FILE* f = fopen("TP1_resultats.", "r");
 		FILE* f = fopen("TP1_resultats.", "r");
 		while (fgets(s,MAXLEN,f) != NULL) {
 
@@ -107,7 +109,7 @@ int main (int argc,char *argv[])
         //    printf("Adresse a chercher : %s  ",inet_ntoa(a));
 			a.s_addr=htonl(lookupMyAlgo(addr));
 
-			printf("GW found = %s\n",inet_ntoa(a));
+		//	printf("GW found = %s\n",inet_ntoa(a));
 
 			if(strcmp(inet_ntoa(a), result) == 0){
 				count_ok++;
