@@ -24,7 +24,6 @@ int loadFile(char *path)
  	struct in_addr c;
 	unsigned int addr,netmask,gw;
 
-	printf("\n");
 	// first sanity check
 	if (!path) return 0;
 	if ((fi=fopen(path,"r")) == NULL ) return 0;
@@ -40,10 +39,6 @@ int loadFile(char *path)
 			if (inet_aton(start,&c) == 0 ) continue;
 			addr=htonl(c.s_addr);
 		}
-	//	printf("Addresse : %s\n",inet_ntoa(c));
-		/*for(int i=0;i<32;i++){
-		printf("Bit indice %d = %d\n",i,take_bit(addr,i));
-	}*/
 
 
 		// skip remaining blank char
@@ -57,8 +52,6 @@ int loadFile(char *path)
 			if (inet_aton(start,&c) == 0 ) continue;
 			netmask=htonl(c.s_addr);
 		}
-	//	printf("Netmask : %s\n",inet_ntoa(c));
-	//	printf("CIDR = %d\n",calcul_cidr(netmask));
 		// skip remaining blank char
 		while (*p && (*p == ' ')) p++;
 
@@ -96,8 +89,8 @@ int main (int argc,char *argv[])
 	if ((argc > 1 ) && (loadFile(argv[1]))) {
 		printf("IP lookup algo\n");
 
-		//FILE* f = fopen("TP1_resultats.", "r");
 		FILE* f = fopen("TP1_resultats.", "r");
+		//FILE* f = fopen("testresultats.", "r");
 		while (fgets(s,MAXLEN,f) != NULL) {
 
 			char* ip = strtok(s, " ");
@@ -106,10 +99,10 @@ int main (int argc,char *argv[])
 			s[MAXLEN]=0;
 			if (inet_aton(ip,&a) == 0 ) continue;
 			addr=htonl(a.s_addr);
-        //    printf("Adresse a chercher : %s  ",inet_ntoa(a));
+            //printf("Adresse a chercher : %s  ",inet_ntoa(a));
 			a.s_addr=htonl(lookupMyAlgo(addr));
 
-		//	printf("GW found = %s\n",inet_ntoa(a));
+			//printf("GW found = %s\n",inet_ntoa(a));
 
 			if(strcmp(inet_ntoa(a), result) == 0){
 				count_ok++;
